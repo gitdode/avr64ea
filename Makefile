@@ -5,7 +5,7 @@
 MCU = avr64ea28
 F_CPU = 10000000
 BAUD = 9600
-PROGRAMMER_TYPE = atmelice_isp
+PROGRAMMER_TYPE = atmelice_updi
 PROGRAMMER_ARGS = -B 125kHz
 
 MAIN = avr64ea.c
