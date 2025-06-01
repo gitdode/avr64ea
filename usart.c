@@ -15,7 +15,7 @@ char usartData[USART_LENGTH];
  * Called when data was received via USART.
  */
 ISR(USART1_RXC_vect) {
-    if (!usartReceived && bit_is_set(USART1_STATUS, SPI_RXCIF_bp)) {
+    if (!usartReceived && bit_is_set(USART1_STATUS, USART_RXCIF_bp)) {
         char data = USART1_RXDATAL;
         size_t length = strlen(usartData);
         if (length < USART_LENGTH - 1 && data != '\n' && data != '\r') {

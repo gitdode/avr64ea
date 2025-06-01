@@ -18,6 +18,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <avr/sleep.h>
 
 #include "utils.h"
 #include "usart.h"
@@ -35,15 +36,25 @@
 /* Serial resistance */
 #define TH_SERI     100000
 
+/* Periodic interrupt timer interrupt count */
+static volatile uint32_t pitints = 0;
+
 /* Timer/Counter Type A 0 interrupt count */
 static volatile uint32_t tca0ints = 0;
 
 /* ADC0 result ready */
 static volatile bool adcResReady = false;
 
+/* Periodic interrupt timer interrupt */
+ISR(RTC_PIT_vect) {
+    // clear flag or it remains active
+    RTC_PITINTFLAGS |= RTC_PI_bm;
+    pitints++;
+}
+
 /* Timer/Counter Type A 0 overflow/underflow interrupt */
 ISR(TCA0_OVF_vect) {
-    // generated about once per second, clear flag or it remains active
+    // clear flag or it remains active
     TCA0_SINGLE_INTFLAGS |= TCA_SINGLE_OVF_bm;
     tca0ints++;
 }
@@ -63,14 +74,27 @@ static void initClock(void) {
     CLKCTRL_MCLKTIMEBASE |= (TIMEBASE_VALUE << CLKCTRL_TIMEBASE_gp);
 }
 
+static void initRTC(void) {
+    // clock RTC with 32.768 kHz internal osciallator
+    RTC_CLKSEL |= RTC_CLKSEL_OSC32K_gc;
+    // enable periodic interrupt
+    RTC_PITINTCTRL |= RTC_PI_bm;
+    // wait for PITCTRLA to be synchronized
+    loop_until_bit_is_clear(RTC_PITSTATUS, RTC_CTRLBUSY_bp);
+    // set periodic interrupt period in RTC clock cycles, enable PIT
+    RTC_PITCTRLA |= RTC_PERIOD_CYC32768_gc | RTC_PITEN_bm;
+}
+
 /* Initializes Timer/Counter Type A 0 */
 static void initTimer(void) {
     // set timer period/TOP value
     TCA0_SINGLE_PER = F_CPU / 1024;
     // timer clock select, enable timer
-    TCA0_SINGLE_CTRLA |= TCA_SINGLE_CLKSEL_DIV1024_gc | (1 << TCA_SINGLE_ENABLE_bp);
+    TCA0_SINGLE_CTRLA |= TCA_SINGLE_CLKSEL_DIV1024_gc | TCA_SINGLE_ENABLE_bm;
     // enable overflow/underflow interrupt
     TCA0_SINGLE_INTCTRL |= (1 << TCA_SINGLE_OVF_bp);
+    // keep on running in standby sleep mode
+    TCA0_SINGLE_CTRLA |= TCA_SINGLE_RUNSTDBY_bm;
 }
 
 /* Initializes the ADC */
@@ -118,16 +142,17 @@ static int16_t measure(void) {
 
     // resistance of the thermistor
     float resTh = (4096.0 / fmax(1, adc) - 1) * TH_SERI;
-    // temperature in °C
-    float temp = 1.0 / (1.0 / TH_BETA * log(resTh / TH_RESI) + 1.0 / TH_TEMP) - TMP_0C;
+    // temperature in °C * 10
+    float temp = 10.0 / (1.0 / TH_BETA * log(resTh / TH_RESI) + 1.0 / TH_TEMP) - TMP_0C * 10;
 
-    return temp * 10;
+    return temp;
 }
 
 int main(void) {
 
     initClock();
-    initTimer();
+    initRTC();
+    // initTimer();
     initADC();
     initUSART();
 
@@ -137,15 +162,20 @@ int main(void) {
     printString("Hello AVR64EA!\r\n");
 
     while (true) {
-        if (tca0ints > 0) {
-            tca0ints = 0;
-
+        if (pitints % 3 == 0) {
             uint16_t temp = measure();
             div_t tmp = div(temp, 10);
             char buf[18];
             snprintf(buf, sizeof (buf), "%4d.%d°C\r\n", tmp.quot, abs(tmp.rem));
             printString(buf);
+
+            // TODO wait for USART to complete before entering sleep mode
+            _delay_ms(5);
         }
+
+        // save some power
+        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+        sleep_mode();
     }
 
     return 0;
