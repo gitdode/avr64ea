@@ -47,14 +47,14 @@ static volatile bool adcResReady = false;
 
 /* Periodic interrupt timer interrupt */
 ISR(RTC_PIT_vect) {
-    // clear flag or it remains active
+    // clear flag or interrupt remains active
     RTC_PITINTFLAGS |= RTC_PI_bm;
     pitints++;
 }
 
 /* Timer/Counter Type A 0 overflow/underflow interrupt */
 ISR(TCA0_OVF_vect) {
-    // clear flag or it remains active
+    // clear flag or interrupt remains active
     TCA0_SINGLE_INTFLAGS |= TCA_SINGLE_OVF_bm;
     tca0ints++;
 }
@@ -62,6 +62,20 @@ ISR(TCA0_OVF_vect) {
 /* ADC0 result ready interrupt */
 ISR(ADC0_RESRDY_vect) {
     adcResReady = true;
+}
+
+/* Disables digital input buffer on all pins to save (a lot of) power */
+static void initPins(void) {
+    // disable digital input buffer on all PORTA pins
+    PORTA_PINCONFIG = PORT_ISC_INPUT_DISABLE_gc;
+    // copy pin config to all pins
+    PORTA_PINCTRLUPD = 0xff;
+    PORTC_PINCTRLUPD = 0xff;
+    PORTD_PINCTRLUPD = 0xff;
+    PORTF_PINCTRLUPD = 0xff;
+
+    // PA5 powers the thermistor
+    PORTA_DIRSET |= (1 << PA5);
 }
 
 /* Sets CPU and peripherals clock speed */
@@ -133,12 +147,15 @@ static uint32_t convert(void) {
 }
 
 /**
- * Measures the temperature and returns it in °C * 10.
+ * Measures the temperature and returns it in °C * 10. Powers on the thermistor
+ * before AD conversion and again off after, saving about 22µA during sleep mode.
  *
  * @return temperature in °C * 10
  */
 static int16_t measure(void) {
+    PORTA_OUTSET |= (1 << PA5);
     uint32_t adc = convert();
+    PORTA_OUTCLR |= (1 << PA5);
 
     // resistance of the thermistor
     float resTh = (4096.0 / fmax(1, adc) - 1) * TH_SERI;
@@ -150,6 +167,7 @@ static int16_t measure(void) {
 
 int main(void) {
 
+    initPins();
     initClock();
     initRTC();
     // initTimer();
@@ -159,10 +177,13 @@ int main(void) {
     // enable global interrupts
     sei();
 
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+
     printString("Hello AVR64EA!\r\n");
 
     while (true) {
         if (pitints % 3 == 0) {
+
             uint16_t temp = measure();
             div_t tmp = div(temp, 10);
             char buf[18];
@@ -174,7 +195,6 @@ int main(void) {
         }
 
         // save some power
-        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
         sleep_mode();
     }
 
