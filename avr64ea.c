@@ -61,6 +61,8 @@ ISR(TCA0_OVF_vect) {
 
 /* ADC0 result ready interrupt */
 ISR(ADC0_RESRDY_vect) {
+    // flag also cleared when reading result
+    ADC0_INTFLAGS |= ADC_RESRDY_bm;
     adcResReady = true;
 }
 
