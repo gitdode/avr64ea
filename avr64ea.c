@@ -182,6 +182,11 @@ int main(void) {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 
     printString("Hello AVR64EA!\r\n");
+    char rev[16];
+    snprintf(rev, sizeof (rev), "Rev. %c%d\r\n",
+            (SYSCFG_REVID >> 4) - 1 + 'A',
+            SYSCFG_REVID & SYSCFG_MINOR_gm);
+    printString(rev);
 
     while (true) {
         if (pitints % 3 == 0) {
