@@ -60,6 +60,7 @@ void getUSARTData(char *data, size_t size) {
 void printString(const char *data) {
     uint8_t i = 0;
     char c;
+    USART1_STATUS |= USART_TXCIF_bm;
     while ((c = data[i++]) != '\0') {
         loop_until_bit_is_set(USART1_STATUS, USART_DREIF_bp);
         USART1_TXDATAL = c;

@@ -26,6 +26,9 @@
 /* Asynchronous Normal mode: S = 16 */
 #define UBRR ((64 * F_CPU) / (16UL * BAUDRATE))
 
+/* Waits until transmit complete */
+#define wait_usart_tx_done() loop_until_bit_is_set(USART1_STATUS, USART_TXCIF_bp)
+
 /**
  * Sets the baudrate and enables the transmitter and receiver.
  */

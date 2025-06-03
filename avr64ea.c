@@ -190,15 +190,12 @@ int main(void) {
 
     while (true) {
         if (pitints % 3 == 0) {
-
             uint16_t temp = measure();
             div_t tmp = div(temp, 10);
             char buf[18];
             snprintf(buf, sizeof (buf), "%4d.%d°C\r\n", tmp.quot, abs(tmp.rem));
             printString(buf);
-
-            // TODO wait for USART to complete before entering sleep mode
-            _delay_ms(5);
+            wait_usart_tx_done();
         }
 
         // save some power
