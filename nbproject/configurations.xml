@@ -36,6 +36,7 @@
             <Elem>BAUDRATE=9600</Elem>
             <Elem>F_CPU=10000000UL</Elem>
             <Elem>__AVR_AVR64EA28__</Elem>
+            <Elem>__flash=volatile</Elem>
           </preprocessorList>
         </cTool>
       </compileType>

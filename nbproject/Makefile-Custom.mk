@@ -65,11 +65,11 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/avr64ea: ${OBJECTFILES}
 
 ${OBJECTDIR}/_ext/ce5ff35b/avr64ea.o: /home/dode/dev/avr64ea/avr64ea.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/ce5ff35b
-	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -D__AVR_AVR64EA28__ -I. -std=c99 -o ${OBJECTDIR}/_ext/ce5ff35b/avr64ea.o /home/dode/dev/avr64ea/avr64ea.c
+	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -D__AVR_AVR64EA28__ -D__flash=volatile -I. -std=c99 -o ${OBJECTDIR}/_ext/ce5ff35b/avr64ea.o /home/dode/dev/avr64ea/avr64ea.c
 
 ${OBJECTDIR}/_ext/ce5ff35b/usart.o: /home/dode/dev/avr64ea/usart.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/ce5ff35b
-	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -D__AVR_AVR64EA28__ -I. -o ${OBJECTDIR}/_ext/ce5ff35b/usart.o /home/dode/dev/avr64ea/usart.c
+	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -D__AVR_AVR64EA28__ -D__flash=volatile -I. -o ${OBJECTDIR}/_ext/ce5ff35b/usart.o /home/dode/dev/avr64ea/usart.c
 
 # Subprojects
 .build-subprojects:

@@ -45,6 +45,9 @@ static volatile uint32_t tca0ints = 0;
 /* ADC0 result ready */
 static volatile bool adcResReady = false;
 
+/* No need to use __flash or PROGMEM */
+const char pgmstr[] = "This is a string in program memory\r\n";
+
 /* Periodic interrupt timer interrupt */
 ISR(RTC_PIT_vect) {
     // clear flag or interrupt remains active
@@ -90,6 +93,7 @@ static void initClock(void) {
     CLKCTRL_MCLKTIMEBASE |= (TIMEBASE_VALUE << CLKCTRL_TIMEBASE_gp);
 }
 
+/* Initializes the Periodic Interrupt Timer */
 static void initRTC(void) {
     // clock RTC with 32.768 kHz internal osciallator
     RTC_CLKSEL |= RTC_CLKSEL_OSC32K_gc;
@@ -187,6 +191,8 @@ int main(void) {
             (SYSCFG_REVID >> 4) - 1 + 'A',
             SYSCFG_REVID & SYSCFG_MINOR_gm);
     printString(rev);
+
+    printString(pgmstr);
 
     while (true) {
         if (pitints % 3 == 0) {
