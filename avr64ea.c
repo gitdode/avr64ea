@@ -45,8 +45,8 @@ static volatile uint32_t tca0ints = 0;
 /* ADC0 result ready */
 static volatile bool adcResReady = false;
 
-/* No need to use __flash or PROGMEM */
-const char pgmstr[] = "This is a string in program memory\r\n";
+/* Read only data in program memory visible in RAM address space */
+const char rostr[] = "This is a string in .rodata in program memory\r\n";
 
 /* Periodic interrupt timer interrupt */
 ISR(RTC_PIT_vect) {
@@ -192,7 +192,7 @@ int main(void) {
             SYSCFG_REVID & SYSCFG_MINOR_gm);
     printString(rev);
 
-    printString(pgmstr);
+    printString(rostr);
 
     while (true) {
         if (pitints % 3 == 0) {

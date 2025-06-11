@@ -30,16 +30,12 @@ ISR(USART1_RXC_vect) {
 void initUSART(void) {
     // translated baud rate
     USART1_BAUD = UBRR;
-
     // async, no parity, 1 stop bit, 8 bit (POR)
     USART1_CTRLC = (0x03 << USART_CHSIZE_gp);
-
     // set TxD as output pin
     PORTC_DIRSET |= (1 << PC0);
-
     // enable transmitter and receiver
     USART1_CTRLB = (1 << USART_RXEN_bp) | (1 << USART_TXEN_bp);
-
     // enable receive complete interrupt
     USART1_CTRLA |= (1 << USART_RXCIE_bp);
 }
