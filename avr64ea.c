@@ -42,9 +42,6 @@ static volatile uint32_t pitints = 0;
 /* Timer/Counter Type A 0 interrupt count */
 static volatile uint32_t tca0ints = 0;
 
-/* ADC0 result ready */
-static volatile bool adcResReady = false;
-
 /* Read only data in program memory visible in RAM address space */
 const char rostr[] = "This is a string in .rodata in program memory\r\n";
 
@@ -64,9 +61,9 @@ ISR(TCA0_OVF_vect) {
 
 /* ADC0 result ready interrupt */
 ISR(ADC0_RESRDY_vect) {
+    // can use ISR or just check flags
     // flag also cleared when reading result
-    ADC0_INTFLAGS |= ADC_RESRDY_bm;
-    adcResReady = true;
+    // ADC0_INTFLAGS |= ADC_RESRDY_bm;
 }
 
 /* Disables digital input buffer on all pins to save (a lot of) power */
@@ -141,14 +138,12 @@ static void initADC(void) {
  * @return 12-bit conversion result
  */
 static uint32_t convert(void) {
-    adcResReady = false;
-
     // start an immediate conversion
     ADC0_COMMAND |= ADC_START_IMMEDIATE_gc;
-    // wait for "result ready" interrupt
-    do {} while (!adcResReady);
+    // wait for "result ready" interrupt flag
+    do {} while (!(ADC0_INTFLAGS & ADC_RESRDY_bm));
 
-    // return conversion result
+    // return conversion result (clears flag)
     return ADC0_RESULT;
 }
 
