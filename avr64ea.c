@@ -59,12 +59,17 @@ ISR(TCA0_OVF_vect) {
     tca0ints++;
 }
 
-/* ADC0 result ready interrupt */
+/* ADC0 result ready interrupt... */
+/*
 ISR(ADC0_RESRDY_vect) {
     // can use ISR or just check flags
     // flag also cleared when reading result
-    // ADC0_INTFLAGS |= ADC_RESRDY_bm;
+    ADC0_INTFLAGS |= ADC_RESRDY_bm;
 }
+ */
+
+/* ...or just empty */
+EMPTY_INTERRUPT(ADC0_RESRDY_vect);
 
 /* Disables digital input buffer on all pins to save (a lot of) power */
 static void initPins(void) {
