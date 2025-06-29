@@ -36,6 +36,9 @@
 /* Serial resistance */
 #define TH_SERI     100000
 
+/* Generates a software event on the given channel */
+#define generate_event(channel) EVSYS_SWEVENTA |= (1 << channel)
+
 /* Periodic interrupt timer interrupt count */
 static volatile uint32_t pitints = 0;
 
@@ -108,7 +111,7 @@ static void initRTC(void) {
 }
 
 /* Initializes Timer/Counter Type A 0 */
-static void initTimer(void) {
+static void initTimerA(void) {
     // set timer period/TOP value
     TCA0_SINGLE_PER = F_CPU / 1024;
     // timer clock select, enable timer
@@ -117,6 +120,12 @@ static void initTimer(void) {
     TCA0_SINGLE_INTCTRL |= (1 << TCA_SINGLE_OVF_bp);
     // keep on running in standby sleep mode
     TCA0_SINGLE_CTRLA |= TCA_SINGLE_RUNSTDBY_bm;
+}
+
+/* Initializes Timer/Counter Type B 0 */
+static void initTimerB(void) {
+    // positive edge on event input, enable timer
+    TCB0_CTRLA |= TCB_CLKSEL_EVENT_gc | TCB_ENABLE_bm;
 }
 
 /* Initializes the ADC */
@@ -135,6 +144,12 @@ static void initADC(void) {
     ADC0_COMMAND |= ADC_MODE_SINGLE_12BIT_gc;
     // enable result ready interrupt
     ADC0_INTCTRL |= ADC_RESRDY_bm;
+}
+
+/* Initializes the Event System */
+static void initEVSYS(void) {
+    // connect Timer/Counter Type B 0 as event user to CHANNEL0
+    EVSYS_USERTCB0COUNT |= EVSYS_CHANNEL_0_bm;
 }
 
 /**
@@ -176,9 +191,11 @@ int main(void) {
     initPins();
     initClock();
     initRTC();
-    // initTimer();
+    // initTimerA();
+    initTimerB();
     initADC();
     initUSART();
+    initEVSYS();
 
     // enable global interrupts
     sei();
@@ -201,6 +218,10 @@ int main(void) {
             char buf[18];
             snprintf(buf, sizeof (buf), "%4d.%d°C\r\n", tmp.quot, abs(tmp.rem));
             printString(buf);
+
+            generate_event(0);
+
+            printInt(TCB0_CNT); // 16-Bit
             wait_usart_tx_done();
         }
 
