@@ -36,6 +36,8 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/_ext/ce5ff35b/avr64ea.o \
+	${OBJECTDIR}/_ext/ce5ff35b/rfm.o \
+	${OBJECTDIR}/_ext/ce5ff35b/spi.o \
 	${OBJECTDIR}/_ext/ce5ff35b/usart.o
 
 
@@ -65,11 +67,19 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/avr64ea: ${OBJECTFILES}
 
 ${OBJECTDIR}/_ext/ce5ff35b/avr64ea.o: /home/dode/dev/avr64ea/avr64ea.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/ce5ff35b
-	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -D__AVR_AVR64EA28__ -D__flash=volatile -I. -std=c99 -o ${OBJECTDIR}/_ext/ce5ff35b/avr64ea.o /home/dode/dev/avr64ea/avr64ea.c
+	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -DRFM=69 -D__AVR_AVR64EA28__ -D__flash=volatile -I. -I/home/dode/dev -std=c99 -o ${OBJECTDIR}/_ext/ce5ff35b/avr64ea.o /home/dode/dev/avr64ea/avr64ea.c
+
+${OBJECTDIR}/_ext/ce5ff35b/rfm.o: /home/dode/dev/avr64ea/rfm.c
+	${MKDIR} -p ${OBJECTDIR}/_ext/ce5ff35b
+	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -DRFM=69 -D__AVR_AVR64EA28__ -D__flash=volatile -I. -I/home/dode/dev -o ${OBJECTDIR}/_ext/ce5ff35b/rfm.o /home/dode/dev/avr64ea/rfm.c
+
+${OBJECTDIR}/_ext/ce5ff35b/spi.o: /home/dode/dev/avr64ea/spi.c
+	${MKDIR} -p ${OBJECTDIR}/_ext/ce5ff35b
+	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -DRFM=69 -D__AVR_AVR64EA28__ -D__flash=volatile -I. -I/home/dode/dev -o ${OBJECTDIR}/_ext/ce5ff35b/spi.o /home/dode/dev/avr64ea/spi.c
 
 ${OBJECTDIR}/_ext/ce5ff35b/usart.o: /home/dode/dev/avr64ea/usart.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/ce5ff35b
-	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -D__AVR_AVR64EA28__ -D__flash=volatile -I. -o ${OBJECTDIR}/_ext/ce5ff35b/usart.o /home/dode/dev/avr64ea/usart.c
+	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -DRFM=69 -D__AVR_AVR64EA28__ -D__flash=volatile -I. -I/home/dode/dev -o ${OBJECTDIR}/_ext/ce5ff35b/usart.o /home/dode/dev/avr64ea/usart.c
 
 # Subprojects
 .build-subprojects:

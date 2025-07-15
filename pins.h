@@ -10,9 +10,11 @@
 
 #include <avr/io.h>
 
-#define PA5 PIN5
 #define PC0 PIN0
 #define PC1 PIN1
+#define PC2 PIN2
+#define PD0 PIN0
+#define PD1 PIN1
 
 #endif /* PINS_H */
 
