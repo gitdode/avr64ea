@@ -15,6 +15,7 @@
 #endif
 #include "pins.h"
 #include "spi.h"
+#include "usart.h"
 
 void _rfmDelay5() {
     _delay_ms(5);
@@ -22,7 +23,7 @@ void _rfmDelay5() {
 
 void _rfmOn() {
 #if RFM == 69
-    PORTD_OUT &= ~(1 << 0);
+    PORTD_OUT &= ~(1 << PD0);
 #endif
 #if RFM == 95
     PORTD_OUT |= (1 << PD0);
