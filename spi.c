@@ -24,7 +24,7 @@ void spiFast(void) {
 
 uint8_t transmit(uint8_t data) {
     SPI0_DATA = data;
-    loop_until_bit_is_set(SPI0_INTFLAGS, SPI_IF_bm);
+    loop_until_bit_is_set(SPI0_INTFLAGS, SPI_IF_bp);
 
     return SPI0_DATA;
 }

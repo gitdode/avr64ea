@@ -24,6 +24,7 @@
 #include "usart.h"
 #if RFM == 69
     #include "librfm69/librfm69.h"
+#include "spi.h"
 #endif
 #if RFM == 95
     #include "librfm95/librfm95.h"
@@ -47,7 +48,7 @@
 #endif
 
 #ifndef LORA
-    #define LORA        1
+    #define LORA    1
 #endif
 
 /* Generates a software event on the given channel */
@@ -92,12 +93,14 @@ EMPTY_INTERRUPT(ADC0_RESRDY_vect);
  * Radio module DIO and DIO4 (FSK)/DIO1 (LoRa) interrupt.
  */
 ISR(PORTD_PORT_vect) {
-    if (PORTD_INTFLAGS & PORT_INT2_bm) {
-        PORTD_INTFLAGS |= PORT_INT2_bm;
+    if (PORTD_INTFLAGS & PORT_INT_2_bm) {
+        PORTD_INTFLAGS |= PORT_INT_2_bm;
+        // DIO0
         rfmIrq();
     }
-    if (PORTD_INTFLAGS & PORT_INT3_bm) {
-        PORTD_INTFLAGS |= PORT_INT3_bm;
+    if (PORTD_INTFLAGS & PORT_INT_3_bm) {
+        PORTD_INTFLAGS |= PORT_INT_3_bm;
+        // DIO4 (FSK)/DIO1 (LoRa)
         rfmIrq();
     }
 }
@@ -112,12 +115,21 @@ static void initPins(void) {
     PORTD_PINCTRLUPD = 0xff;
     PORTF_PINCTRLUPD = 0xff;
 
-    // PC2 powers the thermistor
-    PORTC_DIRSET |= (1 << PC2);
-    // PD0 is radio module reset pin
-    PORTD_DIRSET |= (1 << PD0);
-    // PD1 is radio module CS pin
-    PORTD_DIRSET |= (1 << PD1);
+    // set MOSI and SCK as output pin
+    PORTA_DIR |= (1 << MOSI);
+    PORTA_DIR |= (1 << SCK);
+    // enable input on MISO pin
+    PORTA_PIN5CTRL = PORT_ISC_INTDISABLE_gc;
+
+    // PC2 powers the thermistor (output pin)
+    PORTC_DIR |= (1 << PC2);
+
+    // PD0 is radio module reset pin (output pin)
+    PORTD_DIR |= (1 << PD0);
+
+    // PD1 is radio module CS pin (output pin + pullup)
+    PORTD_DIR |= (1 << PD1);
+    PORTD_OUT |= (1 << PD1);
 }
 
 /* Sets CPU and peripherals clock speed */
@@ -171,7 +183,7 @@ static void initADC(void) {
     // set sample duration to 16.5 * CLK_ADC
     ADC0_CTRLE |= (16 << ADC_SAMPDUR_gp);
     // configure positive input to PA6/AIN26
-    ADC0_MUXPOS |= ADC_MUXPOS_AIN26_gc;
+    ADC0_MUXPOS |= ADC_MUXPOS_AIN23_gc;
     // configure single 12-bit mode of operation
     ADC0_COMMAND |= ADC_MODE_SINGLE_12BIT_gc;
     // enable result ready interrupt
@@ -180,6 +192,8 @@ static void initADC(void) {
 
 /* Initializes the SPI */
 static void initSPI(void) {
+    // disable client select line, SS pin can be used as regular I/O pin
+    SPI0_CTRLB |= SPI_SSD_bm;
     // SPI master mode, SPI enable
     SPI0_CTRLA |= SPI_MASTER_bm | SPI_ENABLE_bm;
 }
@@ -193,14 +207,14 @@ static void initEVSYS(void) {
 static void intEnable(bool enable) {
     if (enable) {
         // PD2 sense rising edge
-        PORTD_PIN2CTRL |= PORT_ISC_RISING_gc;
+        PORTD_PIN2CTRL = PORT_ISC_RISING_gc;
         // PD3 sense rising edge
-        PORTD_PIN3CTRL |= PORT_ISC_RISING_gc;
+        PORTD_PIN3CTRL = PORT_ISC_RISING_gc;
     } else {
         // PD2 disable digital input buffer to save power
-        PORTD_PIN2CTRL |= PORT_ISC_INPUT_DISABLE_gc;
+        PORTD_PIN2CTRL = PORT_ISC_INPUT_DISABLE_gc;
         // PD3 disable digital input buffer to save power
-        PORTD_PIN3CTRL |= PORT_ISC_INPUT_DISABLE_gc;
+        PORTD_PIN3CTRL = PORT_ISC_INPUT_DISABLE_gc;
     }
 }
 
@@ -226,9 +240,9 @@ static uint32_t convert(void) {
  * @return temperature in °C * 10
  */
 static int16_t measure(void) {
-    PORTA_OUTSET |= (1 << PC2);
+    PORTC_OUT |= (1 << PC2);
     uint32_t adc = convert();
-    PORTA_OUTCLR |= (1 << PC2);
+    PORTC_OUT &= ~(1 << PC2);
 
     // resistance of the thermistor
     float resTh = (4096.0 / fmax(1, adc) - 1) * TH_SERI;
@@ -257,12 +271,15 @@ int main(void) {
             SYSCFG_REVID & SYSCFG_MINOR_gm);
     printString(rev);
 
+    // slow down SPI for the breadboard wiring
+    spiMid();
+
     bool radio = false;
     #if RFM == 69
-        rfmInit(868600, 0x42, 0x84);
+        radio = rfmInit(433600, 0x42, 0x84);
     #endif
     #if RFM == 95
-        rfmInit(868600, 0x42, 0x84, LORA);
+        radio = rfmInit(868600, 0x42, 0x84, LORA);
     #endif
     if (!radio) {
         printString("Radio init failed!\r\n");
@@ -277,11 +294,16 @@ int main(void) {
 
     while (true) {
         if (pitints % 3 == 0) {
-            intEnable(true);
             uint16_t temp = measure();
 
-            uint8_t payload[] = {temp >> 8, temp & 0x00ff};
-            rfmTransmitPayload(payload, sizeof (payload), 0x24);
+            if (radio) {
+                uint8_t payload[] = {temp >> 8, temp & 0x00ff};
+                rfmWake();
+                intEnable(true);
+                rfmTransmitPayload(payload, sizeof (payload), 0x24);
+                rfmSleep();
+                intEnable(false);
+            }
 
             div_t tmp = div(temp, 10);
             char buf[18];
@@ -295,7 +317,6 @@ int main(void) {
         }
 
         // save some power
-        intEnable(false);
         sleep_mode();
     }
 

@@ -22,19 +22,19 @@ void _rfmDelay5() {
 
 void _rfmOn() {
 #if RFM == 69
-    PORTD_OUTCLR |= (1 << PD0);
+    PORTD_OUT &= ~(1 << 0);
 #endif
 #if RFM == 95
-    PORTD_OUTSET |= (1 << PD0);
+    PORTD_OUT |= (1 << PD0);
 #endif
 }
 
 void _rfmSel() {
-    PORTD_OUTCLR |= (1 << PD1);
+    PORTD_OUT &= ~(1 << PD1);
 }
 
 void _rfmDes() {
-    PORTD_OUTSET |= (1 << PD1);
+    PORTD_OUT |= (1 << PD1);
 }
 
 uint8_t _rfmTx(uint8_t data) {
