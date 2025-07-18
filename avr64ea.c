@@ -116,20 +116,20 @@ static void initPins(void) {
     PORTF_PINCTRLUPD = 0xff;
 
     // set MOSI and SCK as output pin
-    PORTA_DIR |= (1 << MOSI);
-    PORTA_DIR |= (1 << SCK);
+    PORTA_DIRSET = (1 << MOSI);
+    PORTA_DIRSET = (1 << SCK);
     // enable input on MISO pin
     PORTA_PIN5CTRL = PORT_ISC_INTDISABLE_gc;
 
     // PC2 powers the thermistor (output pin)
-    PORTC_DIR |= (1 << PC2);
+    PORTC_DIRSET = (1 << PC2);
 
     // PD0 is radio module reset pin (output pin)
-    PORTD_DIR |= (1 << PD0);
+    PORTD_DIRSET = (1 << PD0);
 
     // PD1 is radio module CS pin (output pin + pullup)
-    PORTD_DIR |= (1 << PD1);
-    PORTD_OUT |= (1 << PD1);
+    PORTD_DIRSET = (1 << PD1);
+    PORTD_OUTSET = (1 << PD1);
 }
 
 /* Sets CPU and peripherals clock speed */
@@ -240,9 +240,9 @@ static uint32_t convert(void) {
  * @return temperature in °C * 10
  */
 static int16_t measure(void) {
-    PORTC_OUT |= (1 << PC2);
+    PORTC_OUTSET = (1 << PC2);
     uint32_t adc = convert();
-    PORTC_OUT &= ~(1 << PC2);
+    PORTC_OUTCLR = (1 << PC2);
 
     // resistance of the thermistor
     float resTh = (4096.0 / fmax(1, adc) - 1) * TH_SERI;
