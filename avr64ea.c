@@ -54,6 +54,11 @@
 /* Generates a software event on the given channel */
 #define generate_event(channel) EVSYS_SWEVENTA |= (1 << channel)
 
+/* Enables/disables digital input buffer on MISO pin */
+#define set_miso(enable) enable \
+    ? (PORTA_PIN5CTRL = PORT_ISC_INTDISABLE_gc) \
+    : (PORTA_PIN5CTRL = PORT_ISC_INPUT_DISABLE_gc)
+
 /* Periodic interrupt timer interrupt count */
 static volatile uint32_t pitints = 0;
 
@@ -204,18 +209,12 @@ static void initEVSYS(void) {
     EVSYS_USERTCB0COUNT |= EVSYS_CHANNEL_0_bm;
 }
 
-static void intEnable(bool enable) {
-    if (enable) {
-        // PD2 sense rising edge
-        PORTD_PIN2CTRL = PORT_ISC_RISING_gc;
-        // PD3 sense rising edge
-        PORTD_PIN3CTRL = PORT_ISC_RISING_gc;
-    } else {
-        // PD2 disable digital input buffer to save power
-        PORTD_PIN2CTRL = PORT_ISC_INPUT_DISABLE_gc;
-        // PD3 disable digital input buffer to save power
-        PORTD_PIN3CTRL = PORT_ISC_INPUT_DISABLE_gc;
-    }
+/* Initializes pin interrupts */
+static void initInts(void) {
+    // PD2 sense rising edge
+    PORTD_PIN2CTRL = PORT_ISC_RISING_gc;
+    // PD3 sense rising edge
+    PORTD_PIN3CTRL = PORT_ISC_RISING_gc;
 }
 
 /**
@@ -263,6 +262,7 @@ int main(void) {
     initUSART();
     initSPI();
     initEVSYS();
+    initInts();
 
     printString("Hello AVR64EA!\r\n");
     char rev[16];
@@ -293,16 +293,17 @@ int main(void) {
     printString(rostr);
 
     while (true) {
-        if (pitints % 3 == 0) {
+        if (pitints % 8 == 0) {
             uint16_t temp = measure();
 
             if (radio) {
                 uint8_t payload[] = {temp >> 8, temp & 0x00ff};
+                set_miso(true);
                 rfmWake();
-                intEnable(true);
                 rfmTransmitPayload(payload, sizeof (payload), 0x24);
                 rfmSleep();
-                intEnable(false);
+                // disabling input buffer on MISO pin saves a lot of power
+                set_miso(false);
             }
 
             div_t tmp = div(temp, 10);
