@@ -54,11 +54,6 @@
 /* Generates a software event on the given channel */
 #define generate_event(channel) EVSYS_SWEVENTA |= (1 << channel)
 
-/* Enables/disables digital input buffer on MISO pin */
-#define set_miso(enable) enable \
-    ? (PORTA_PIN5CTRL = PORT_ISC_INTDISABLE_gc) \
-    : (PORTA_PIN5CTRL = PORT_ISC_INPUT_DISABLE_gc)
-
 /* Periodic interrupt timer interrupt count */
 static volatile uint32_t pitints = 0;
 
@@ -125,6 +120,9 @@ static void initPins(void) {
     PORTA_DIRSET = (1 << SCK);
     // enable input on MISO pin
     PORTA_PIN5CTRL = PORT_ISC_INTDISABLE_gc;
+    // enabling pull-up on MISO pin saves quite some power in sleep mode
+    // disabling digital input buffer before going to sleep has the same effect
+    PORTA_PIN5CTRL |= PORT_PULLUPEN_bm;
 
     // PC2 powers the thermistor (output pin)
     PORTC_DIRSET = (1 << PC2);
@@ -134,7 +132,7 @@ static void initPins(void) {
 
     // PD1 is radio module CS pin (output pin + pullup)
     PORTD_DIRSET = (1 << PD1);
-    PORTD_OUTSET = (1 << PD1);
+    PORTD_PIN1CTRL |= PORT_PULLUPEN_bm;
 }
 
 /* Sets CPU and peripherals clock speed */
@@ -298,12 +296,9 @@ int main(void) {
 
             if (radio) {
                 uint8_t payload[] = {temp >> 8, temp & 0x00ff};
-                set_miso(true);
                 rfmWake();
                 rfmTransmitPayload(payload, sizeof (payload), 0x24);
                 rfmSleep();
-                // disabling input buffer on MISO pin saves a lot of power
-                set_miso(false);
             }
 
             div_t tmp = div(temp, 10);
