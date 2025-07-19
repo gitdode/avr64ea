@@ -120,6 +120,9 @@ static void initPins(void) {
     PORTA_DIRSET = (1 << SCK);
     // enable input on MISO pin
     PORTA_PIN5CTRL = PORT_ISC_INTDISABLE_gc;
+    // enabling pull-up on MISO pin saves quite some power in sleep mode
+    // disabling digital input buffer before going to sleep has the same effect
+    PORTA_PIN5CTRL |= PORT_PULLUPEN_bm;
 
     // PC2 powers the thermistor (output pin)
     PORTC_DIRSET = (1 << PC2);
@@ -129,7 +132,7 @@ static void initPins(void) {
 
     // PD1 is radio module CS pin (output pin + pullup)
     PORTD_DIRSET = (1 << PD1);
-    PORTD_OUTSET = (1 << PD1);
+    PORTD_PIN1CTRL |= PORT_PULLUPEN_bm;
 }
 
 /* Sets CPU and peripherals clock speed */
@@ -204,18 +207,12 @@ static void initEVSYS(void) {
     EVSYS_USERTCB0COUNT |= EVSYS_CHANNEL_0_bm;
 }
 
-static void intEnable(bool enable) {
-    if (enable) {
-        // PD2 sense rising edge
-        PORTD_PIN2CTRL = PORT_ISC_RISING_gc;
-        // PD3 sense rising edge
-        PORTD_PIN3CTRL = PORT_ISC_RISING_gc;
-    } else {
-        // PD2 disable digital input buffer to save power
-        PORTD_PIN2CTRL = PORT_ISC_INPUT_DISABLE_gc;
-        // PD3 disable digital input buffer to save power
-        PORTD_PIN3CTRL = PORT_ISC_INPUT_DISABLE_gc;
-    }
+/* Initializes pin interrupts */
+static void initInts(void) {
+    // PD2 sense rising edge
+    PORTD_PIN2CTRL = PORT_ISC_RISING_gc;
+    // PD3 sense rising edge
+    PORTD_PIN3CTRL = PORT_ISC_RISING_gc;
 }
 
 /**
@@ -263,6 +260,7 @@ int main(void) {
     initUSART();
     initSPI();
     initEVSYS();
+    initInts();
 
     printString("Hello AVR64EA!\r\n");
     char rev[16];
@@ -293,16 +291,14 @@ int main(void) {
     printString(rostr);
 
     while (true) {
-        if (pitints % 3 == 0) {
+        if (pitints % 8 == 0) {
             uint16_t temp = measure();
 
             if (radio) {
                 uint8_t payload[] = {temp >> 8, temp & 0x00ff};
                 rfmWake();
-                intEnable(true);
                 rfmTransmitPayload(payload, sizeof (payload), 0x24);
                 rfmSleep();
-                intEnable(false);
             }
 
             div_t tmp = div(temp, 10);
