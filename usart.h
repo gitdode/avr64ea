@@ -55,13 +55,13 @@ void printString(const char *data);
 /**
  * Prints the given integer including CR + LF via USART.
  */
-void printInt(int8_t data);
+void printInt(int16_t data);
 
 /**
  * Prints the given unsigned integer in hex notation including CR + LF 
  * via USART.
  */
-void printHex(uint8_t data);
+void printHex(uint16_t data);
 
 /**
  * Prints the given unsigned integer in binary notation including CR + LF
