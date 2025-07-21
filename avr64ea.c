@@ -51,6 +51,8 @@
     #define LORA    1
 #endif
 
+#define USART       1
+
 /* Generates a software event on the given channel */
 #define generate_event(channel) EVSYS_SWEVENTA |= (1 << channel)
 
@@ -289,24 +291,28 @@ int main(void) {
     initEVSYS();
     initInts();
 
-    printString("Hello AVR64EA!\r\n");
-    char rev[16];
-    snprintf(rev, sizeof (rev), "Rev. %c%d\r\n",
-            (SYSCFG_REVID >> 4) - 1 + 'A',
-            SYSCFG_REVID & SYSCFG_MINOR_gm);
-    printString(rev);
+    if (USART) {
+        printString("Hello AVR64EA!\r\n");
+        char rev[16];
+        snprintf(rev, sizeof (rev), "Rev. %c%d\r\n",
+                (SYSCFG_REVID >> 4) - 1 + 'A',
+                SYSCFG_REVID & SYSCFG_MINOR_gm);
+        printString(rev);
+    }
 
     // slow down SPI for the breadboard wiring
     spiMid();
 
     bool radio = false;
     #if RFM == 69
-        radio = rfmInit(433600, 0x42, 0x84);
+        radio = rfmInit(433600, 0x28, 0x84);
     #endif
     #if RFM == 95
-        radio = rfmInit(868600, 0x42, 0x84, LORA);
+        radio = rfmInit(868600, 0x28, 0x84, LORA);
     #endif
-    if (!radio) {
+    if (radio) {
+        rfmSetOutputPower(2);
+    } else if (USART) {
         printString("Radio init failed!\r\n");
     }
 
@@ -315,7 +321,7 @@ int main(void) {
 
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 
-    printString(rostr);
+    if (USART) printString(rostr);
 
     while (true) {
         if (pitints % 8 == 0) {
@@ -324,13 +330,15 @@ int main(void) {
             bavg = (bavg + bat) >> 1;
 
             if (bavg < 2100) {
-                printString("Battery low\r\n");
+                if (USART) printString("Battery low\r\n");
             } else {
                 uint16_t temp = measureTemp();
+                uint8_t power = rfmGetOutputPower();
 
                 if (radio) {
                     uint8_t payload[] = {
                         temp >> 8, temp & 0x00ff,
+                        power,
                         bavg >> 8, bavg & 0x00ff
                     };
                     rfmWake();
@@ -338,16 +346,18 @@ int main(void) {
                     rfmSleep();
                 }
 
-                div_t tmp = div(temp, 10);
-                char buf[18];
-                snprintf(buf, sizeof (buf), "%4d.%d°C\r\n", tmp.quot, abs(tmp.rem));
-                printString(buf);
-                snprintf(buf, sizeof (buf), "%d mV\r\n", bavg);
-                printString(buf);
+                if (USART) {
+                    div_t tmp = div(temp, 10);
+                    char buf[18];
+                    snprintf(buf, sizeof (buf), "%4d.%d°C\r\n", tmp.quot, abs(tmp.rem));
+                    printString(buf);
+                    snprintf(buf, sizeof (buf), "%d mV\r\n", bavg);
+                    printString(buf);
+                }
             }
 
             generate_event(0);
-            printInt(TCB0_CNT); // 16-Bit
+            if (USART) printInt(TCB0_CNT); // 16-Bit
             wait_usart_tx_done();
         }
 
