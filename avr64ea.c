@@ -51,6 +51,8 @@
     #define LORA    1
 #endif
 
+#define USART       1
+
 /* Generates a software event on the given channel */
 #define generate_event(channel) EVSYS_SWEVENTA |= (1 << channel)
 
@@ -62,6 +64,9 @@ static volatile uint32_t tca0ints = 0;
 
 /* Read only data in program memory visible in RAM address space */
 const char rostr[] = "This is a string in .rodata in program memory\r\n";
+
+/** Averaged battery voltage in millivolts */
+static uint16_t bavg;
 
 /* Periodic interrupt timer interrupt */
 ISR(RTC_PIT_vect) {
@@ -180,13 +185,13 @@ static void initADC(void) {
     // enable ADC0
     ADC0_CTRLA |= ADC_ENABLE_bm;
     // set ADC clock prescaler
-    ADC0_CTRLB |= ADC_PRESC_DIV6_gc;
+    ADC0_CTRLB = ADC_PRESC_DIV6_gc;
     // use VDD as reference voltage
-    ADC0_CTRLC |= ADC_REFSEL_VDD_gc;
+    ADC0_CTRLC = ADC_REFSEL_VDD_gc;
     // set sample duration to 16.5 * CLK_ADC
-    ADC0_CTRLE |= (16 << ADC_SAMPDUR_gp);
-    // configure positive input to PA6/AIN26
-    ADC0_MUXPOS |= ADC_MUXPOS_AIN23_gc;
+    ADC0_CTRLE = (16 << ADC_SAMPDUR_gp);
+    // enable programmable gain amplifier (default 1x)
+    // ADC0_PGACTRL |= (ADC_PGAEN_bm);
     // configure single 12-bit mode of operation
     ADC0_COMMAND |= ADC_MODE_SINGLE_12BIT_gc;
     // enable result ready interrupt
@@ -218,9 +223,20 @@ static void initInts(void) {
 /**
  * Starts an immediate conversion and returns the result.
  *
+ * @param ref reference voltage
+ * @param pin input pin
+ * @param dur sample duration
  * @return 12-bit conversion result
  */
-static uint32_t convert(void) {
+static uint16_t convert(ADC_REFSEL_t ref, ADC_MUXPOS_t pin, uint8_t dur) {
+    // set the given reference voltage
+    ADC0_CTRLC = ref;
+    // set positive input to given pin
+    ADC0_MUXPOS = pin;
+    // set the sample duration
+    ADC0_CTRLE = dur;
+    // time to settle
+    _delay_us(60);
     // start an immediate conversion
     ADC0_COMMAND |= ADC_START_IMMEDIATE_gc;
     // wait for "result ready" interrupt flag
@@ -236,9 +252,9 @@ static uint32_t convert(void) {
  *
  * @return temperature in °C * 10
  */
-static int16_t measure(void) {
+static int16_t measureTemp(void) {
     PORTC_OUTSET = (1 << PC2);
-    uint32_t adc = convert();
+    uint32_t adc = convert(ADC_REFSEL_VDD_gc, ADC_MUXPOS_AIN23_gc, 16);
     PORTC_OUTCLR = (1 << PC2);
 
     // resistance of the thermistor
@@ -247,6 +263,19 @@ static int16_t measure(void) {
     float temp = 10.0 / (1.0 / TH_BETA * log(resTh / TH_RESI) + 1.0 / TH_TEMP) - TMP_0C * 10;
 
     return temp;
+}
+
+/**
+ * Measures the battery voltage divided by two with 2.048V reference voltage
+ * and returns it in millivolt.
+ *
+ * @return battery voltage
+ */
+static int16_t measureBat(void) {
+    uint32_t adc = convert(ADC_REFSEL_2V048_gc, ADC_MUXPOS_AIN22_gc, 255);
+    uint16_t mv = (adc * 2048 * 2) >> 12;
+
+    return mv;
 }
 
 int main(void) {
@@ -262,24 +291,28 @@ int main(void) {
     initEVSYS();
     initInts();
 
-    printString("Hello AVR64EA!\r\n");
-    char rev[16];
-    snprintf(rev, sizeof (rev), "Rev. %c%d\r\n",
-            (SYSCFG_REVID >> 4) - 1 + 'A',
-            SYSCFG_REVID & SYSCFG_MINOR_gm);
-    printString(rev);
+    if (USART) {
+        printString("Hello AVR64EA!\r\n");
+        char rev[16];
+        snprintf(rev, sizeof (rev), "Rev. %c%d\r\n",
+                (SYSCFG_REVID >> 4) - 1 + 'A',
+                SYSCFG_REVID & SYSCFG_MINOR_gm);
+        printString(rev);
+    }
 
     // slow down SPI for the breadboard wiring
     spiMid();
 
     bool radio = false;
     #if RFM == 69
-        radio = rfmInit(433600, 0x42, 0x84);
+        radio = rfmInit(433600, 0x28, 0x84);
     #endif
     #if RFM == 95
-        radio = rfmInit(868600, 0x42, 0x84, LORA);
+        radio = rfmInit(868600, 0x28, 0x84, LORA);
     #endif
-    if (!radio) {
+    if (radio) {
+        rfmSetOutputPower(2);
+    } else if (USART) {
         printString("Radio init failed!\r\n");
     }
 
@@ -288,26 +321,43 @@ int main(void) {
 
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 
-    printString(rostr);
+    if (USART) printString(rostr);
 
     while (true) {
         if (pitints % 8 == 0) {
-            uint16_t temp = measure();
+            uint16_t bat = measureBat();
+            if (bavg == 0) bavg = bat;
+            bavg = (bavg + bat) >> 1;
 
-            if (radio) {
-                uint8_t payload[] = {temp >> 8, temp & 0x00ff};
-                rfmWake();
-                rfmTransmitPayload(payload, sizeof (payload), 0x24);
-                rfmSleep();
+            if (bavg < 2100) {
+                if (USART) printString("Battery low\r\n");
+            } else {
+                uint16_t temp = measureTemp();
+                uint8_t power = rfmGetOutputPower();
+
+                if (radio) {
+                    uint8_t payload[] = {
+                        temp >> 8, temp & 0x00ff,
+                        power,
+                        bavg >> 8, bavg & 0x00ff
+                    };
+                    rfmWake();
+                    rfmTransmitPayload(payload, sizeof (payload), 0x24);
+                    rfmSleep();
+                }
+
+                if (USART) {
+                    div_t tmp = div(temp, 10);
+                    char buf[18];
+                    snprintf(buf, sizeof (buf), "%4d.%d°C\r\n", tmp.quot, abs(tmp.rem));
+                    printString(buf);
+                    snprintf(buf, sizeof (buf), "%d mV\r\n", bavg);
+                    printString(buf);
+                }
             }
 
-            div_t tmp = div(temp, 10);
-            char buf[18];
-            snprintf(buf, sizeof (buf), "%4d.%d°C\r\n", tmp.quot, abs(tmp.rem));
-            printString(buf);
-
             generate_event(0);
-            printInt(TCB0_CNT); // 16-Bit
+            if (USART) printInt(TCB0_CNT); // 16-Bit
             wait_usart_tx_done();
         }
 

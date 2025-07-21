@@ -63,13 +63,13 @@ void printString(const char *data) {
     }
 }
 
-void printInt(int8_t data) {
+void printInt(int16_t data) {
     char buf[7];
     snprintf(buf, sizeof (buf), "%d\r\n", data);
     printString(buf);
 }
 
-void printHex(uint8_t data) {
+void printHex(uint16_t data) {
     char buf[7];
     snprintf(buf, sizeof (buf), "0x%02x\r\n", data);
     printString(buf);
