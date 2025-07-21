@@ -22,9 +22,9 @@
 
 #include "utils.h"
 #include "usart.h"
+#include "spi.h"
 #if RFM == 69
     #include "librfm69/librfm69.h"
-#include "spi.h"
 #endif
 #if RFM == 95
     #include "librfm95/librfm95.h"
@@ -43,12 +43,8 @@
 /* Serial resistance */
 #define TH_SERI     100000
 
-#if RFM != 69 && RFM != 95
-    #error "Please set RFM to either 69 or 95"
-#endif
-
 #ifndef LORA
-    #define LORA    1
+    #define LORA    0
 #endif
 
 #define USART       1
