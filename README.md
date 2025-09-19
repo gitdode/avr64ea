@@ -2,7 +2,7 @@
 
 ## About
 
-Playground to get into the newer AVRs using the [AVR64EA28](https://www.microchip.com/en-us/product/AVR64EA28).  
+Playground to get into the new AVRs using the [AVR64EA28](https://www.microchip.com/en-us/product/AVR64EA28).  
 
 Measuring temperature with a thermistor and the 12-bit ADC, transmitting it with 
 an RFM radio module, powering off the thermistor, putting the radio module in 
