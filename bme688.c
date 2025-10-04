@@ -23,12 +23,12 @@ static BME68X_INTF_RET_TYPE bme68xWrite(uint8_t reg,
                                         const uint8_t *data,
                                         uint32_t len,
                                         void *intfPtr) {
-    PORTC_OUTCLR = (1 << PD2);
+    PORTD_OUTCLR = (1 << PD4);
     transmit(reg);
     for (uint32_t i = 0; i < len; i++) {
         transmit(data[i]);
     }
-    PORTC_OUTSET = (1 << PD2);
+    PORTD_OUTSET = (1 << PD4);
 
     // TODO
     return 0;
@@ -48,12 +48,12 @@ static BME68X_INTF_RET_TYPE bme68xRead(uint8_t reg,
                                        uint8_t *data,
                                        uint32_t len,
                                        void *intfPtr) {
-    PORTC_OUTCLR = (1 << PD2);
+    PORTD_OUTCLR = (1 << PD4);
     transmit(reg);
     for (uint32_t i = 0; i < len; i++) {
         data[i] = transmit(0x00);
     }
-    PORTC_OUTSET = (1 << PD2);
+    PORTD_OUTSET = (1 << PD4);
 
     // TODO
     return 0;
@@ -77,7 +77,7 @@ int8_t initBME68x() {
     struct bme68x_data data;
     int8_t result;
 
-    uint8_t pin = PD2;
+    uint8_t pin = PD4;
 
     dev.intf = BME68X_SPI_INTF;
     dev.write = bme68xWrite;
