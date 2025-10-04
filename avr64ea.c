@@ -291,7 +291,6 @@ int main(void) {
     initSPI();
     initEVSYS();
     initInts();
-    initBME68x();
 
     if (USART) {
         printString("Hello AVR64EA!\r\n");
@@ -316,6 +315,12 @@ int main(void) {
         rfmSetOutputPower(2);
     } else if (USART) {
         printString("Radio init failed!\r\n");
+    }
+
+    int8_t bme688 = initBME68x();
+    if (bme688 < 0 && USART) {
+        printString("BME688 init failed!\r\n");
+        printInt(bme688);
     }
 
     // enable global interrupts

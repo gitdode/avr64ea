@@ -1,8 +1,6 @@
 /* 
  * File:   bme688.h
  * Author: torsten.roemer@luniks.net
- * 
- * Thanks to https://github.com/boschsensortec/BME68x_SensorAPI/tree/master/examples
  *
  * Created on 4. Oktober 2025, 20:31
  */
@@ -22,11 +20,11 @@
 #include "bme68x/bme68x.h"
 
 /**
- * Initializes the BME68x sensor using the given pin for SPI chip select.
+ * Initializes the BME68x sensor.
  * 
- * @param pin SPI chip select pin
+ * @return error code
  */
-void initBME68x(void);
+int8_t initBME68x(void);
 
 #undef __DELAY_BACKWARD_COMPATIBLE__
 
