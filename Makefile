@@ -14,7 +14,7 @@ RFM = 69
 LORA = 0
 
 MAIN = avr64ea.c
-SRC = rfm.c spi.c usart.c
+SRC = rfm.c spi.c usart.c bme68x/bme68x.c bme688.c
 
 CC = avr-gcc
 OBJCOPY = avr-objcopy
@@ -38,11 +38,13 @@ CFLAGS += -std=gnu99
 TARGET = $(strip $(basename $(MAIN)))
 SRC += $(TARGET).c
 SRC += ../librfm$(RFM)/librfm$(RFM).a
+SRC += ../bsec/AVR8_XMEGA/libalgobsec.a
 
 OBJ = $(SRC:.c=.o)
 OBJ = $(SRC:.S=.o)
 	
-$(TARGET).elf: spi.h usart.h utils.h Makefile
+$(TARGET).elf: spi.h usart.h utils.h bme68x/bme68x.h bme68x/bme68x_defs.h \
+	bme688.h Makefile
 
 all: $(TARGET).hex
 

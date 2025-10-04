@@ -38,7 +38,9 @@ OBJECTFILES= \
 	${OBJECTDIR}/_ext/ce5ff35b/avr64ea.o \
 	${OBJECTDIR}/_ext/ce5ff35b/rfm.o \
 	${OBJECTDIR}/_ext/ce5ff35b/spi.o \
-	${OBJECTDIR}/_ext/ce5ff35b/usart.o
+	${OBJECTDIR}/_ext/ce5ff35b/usart.o \
+	${OBJECTDIR}/bme688.o \
+	${OBJECTDIR}/bme68x/bme68x.o
 
 
 # C Compiler Flags
@@ -80,6 +82,14 @@ ${OBJECTDIR}/_ext/ce5ff35b/spi.o: /home/dode/dev/avr64ea/spi.c
 ${OBJECTDIR}/_ext/ce5ff35b/usart.o: /home/dode/dev/avr64ea/usart.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/ce5ff35b
 	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -DRFM=69 -D__AVR_AVR64EA28__ -D__flash=volatile -I. -I/home/dode/dev -o ${OBJECTDIR}/_ext/ce5ff35b/usart.o /home/dode/dev/avr64ea/usart.c
+
+${OBJECTDIR}/bme688.o: bme688.c
+	${MKDIR} -p ${OBJECTDIR}
+	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -DRFM=69 -D__AVR_AVR64EA28__ -D__flash=volatile -I. -I/home/dode/dev -o ${OBJECTDIR}/bme688.o bme688.c
+
+${OBJECTDIR}/bme68x/bme68x.o: bme68x/bme68x.c
+	${MKDIR} -p ${OBJECTDIR}/bme68x
+	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -DRFM=69 -D__AVR_AVR64EA28__ -D__flash=volatile -I. -I/home/dode/dev -o ${OBJECTDIR}/bme68x/bme68x.o bme68x/bme68x.c
 
 # Subprojects
 .build-subprojects:

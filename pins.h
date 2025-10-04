@@ -19,6 +19,7 @@
 #define PC2     PIN2
 #define PD0     PIN0
 #define PD1     PIN1
+#define PD2     PIN2
 
 #endif /* PINS_H */
 
