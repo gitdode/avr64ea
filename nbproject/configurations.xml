@@ -54,6 +54,25 @@
       </compileType>
       <item path="/home/dode/dev/avr64ea/avr64ea.c" ex="false" tool="0" flavor2="3">
       </item>
+      <item path="/home/dode/dev/avr64ea/bme688.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="/home/dode/dev/avr64ea/bme688.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="/home/dode/dev/avr64ea/bme68x/bme68x.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="/home/dode/dev/avr64ea/bme68x/bme68x.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/dode/dev/avr64ea/bme68x/bme68x_defs.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
       <item path="/home/dode/dev/avr64ea/pins.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="/home/dode/dev/avr64ea/rfm.c" ex="false" tool="0" flavor2="0">
@@ -63,16 +82,6 @@
       <item path="/home/dode/dev/avr64ea/spi.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="/home/dode/dev/avr64ea/usart.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="bme688.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="bme688.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="bme68x/bme68x.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="bme68x/bme68x.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="bme68x/bme68x_defs.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
   </confs>

@@ -136,8 +136,8 @@ static void initPins(void) {
     PORTD_DIRSET = (1 << PD1);
     PORTD_PIN1CTRL |= PORT_PULLUPEN_bm;
 
-    // PD2 is BME68x CS pin (output pin + pullup)
-    PORTD_DIRSET = (1 << PD2);
+    // PD4 is BME68x CS pin (output pin + pullup)
+    PORTD_DIRSET = (1 << PD4);
     PORTD_PIN2CTRL |= PORT_PULLUPEN_bm;
 }
 
@@ -317,8 +317,11 @@ int main(void) {
         printString("Radio init failed!\r\n");
     }
 
-    int8_t bme688 = initBME68x();
-    if (bme688 < 0 && USART) {
+    struct bme68x_dev dev;
+    struct bme68x_conf conf;
+    struct bme68x_heatr_conf heater_conf;
+    int8_t bme688 = initBME68x(&dev, &conf, &heater_conf);
+    if (bme688 != 0 && USART) {
         printString("BME688 init failed!\r\n");
         printInt(bme688);
     }
@@ -360,6 +363,8 @@ int main(void) {
                     printString(buf);
                     snprintf(buf, sizeof (buf), "%d mV\r\n", bavg);
                     printString(buf);
+
+                    bme68xMeasure(&dev, &conf, &heater_conf);
                 }
             }
 

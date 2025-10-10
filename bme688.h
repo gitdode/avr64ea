@@ -22,9 +22,26 @@
 /**
  * Initializes the BME68x sensor.
  * 
+ * @param dev
+ * @param conf
+ * @param heater_conf
  * @return error code
  */
-int8_t initBME68x(void);
+int8_t initBME68x(struct bme68x_dev *dev,
+                  struct bme68x_conf *conf,
+                  struct bme68x_heatr_conf *heater_conf);
+
+/**
+ * Performs a measurement.
+ * 
+ * @param dev
+ * @param conf
+ * @param heater_conf
+ * @return error code
+ */
+int8_t bme68xMeasure(struct bme68x_dev *dev,
+                     struct bme68x_conf *conf,
+                     struct bme68x_heatr_conf *heater_conf);
 
 #undef __DELAY_BACKWARD_COMPATIBLE__
 
