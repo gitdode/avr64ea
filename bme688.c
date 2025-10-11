@@ -23,15 +23,14 @@ static BME68X_INTF_RET_TYPE bme68xWrite(uint8_t reg,
                                         const uint8_t *data,
                                         uint32_t len,
                                         void *intfPtr) {
-    PORTD_OUTCLR = (1 << PD4);
+    PORTD_OUTCLR = (1 << BME_CS_PD4);
     transmit(reg);
     for (uint32_t i = 0; i < len; i++) {
         transmit(data[i]);
     }
-    PORTD_OUTSET = (1 << PD4);
+    PORTD_OUTSET = (1 << BME_CS_PD4);
 
-    // TODO
-    return 0;
+    return BME68X_INTF_RET_SUCCESS;
 }
 
 /**
@@ -48,15 +47,14 @@ static BME68X_INTF_RET_TYPE bme68xRead(uint8_t reg,
                                        uint8_t *data,
                                        uint32_t len,
                                        void *intfPtr) {
-    PORTD_OUTCLR = (1 << PD4);
+    PORTD_OUTCLR = (1 << BME_CS_PD4);
     transmit(reg);
     for (uint32_t i = 0; i < len; i++) {
         data[i] = transmit(0x00);
     }
-    PORTD_OUTSET = (1 << PD4);
+    PORTD_OUTSET = (1 << BME_CS_PD4);
 
-    // TODO
-    return 0;
+    return BME68X_INTF_RET_SUCCESS;
 }
 
 /**
@@ -74,7 +72,7 @@ int8_t initBME68x(struct bme68x_dev *dev,
                   struct bme68x_conf *conf,
                   struct bme68x_heatr_conf *heater_conf) {
 
-    uint8_t pin = PD4;
+    uint8_t pin = BME_CS_PD4;
     int8_t result;
 
     dev->intf = BME68X_SPI_INTF;

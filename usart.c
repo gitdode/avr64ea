@@ -33,7 +33,7 @@ void initUSART(void) {
     // async, no parity, 1 stop bit, 8 bit (POR)
     USART1_CTRLC = (0x03 << USART_CHSIZE_gp);
     // set TxD as output pin
-    PORTC_DIRSET |= (1 << PC0);
+    PORTC_DIRSET |= (1 << USART_TX_PC0);
     // enable transmitter and receiver
     USART1_CTRLB = (1 << USART_RXEN_bp) | (1 << USART_TXEN_bp);
     // enable receive complete interrupt

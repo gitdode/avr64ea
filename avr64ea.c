@@ -118,8 +118,8 @@ static void initPins(void) {
     PORTF_PINCTRLUPD = 0xff;
 
     // set MOSI and SCK as output pin
-    PORTA_DIRSET = (1 << MOSI);
-    PORTA_DIRSET = (1 << SCK);
+    PORTA_DIRSET = (1 << MOSI_PA4);
+    PORTA_DIRSET = (1 << SCK_PA6);
     // enable input on MISO pin
     PORTA_PIN5CTRL = PORT_ISC_INTDISABLE_gc;
     // enabling pull-up on MISO pin saves quite some power in sleep mode
@@ -127,17 +127,17 @@ static void initPins(void) {
     PORTA_PIN5CTRL |= PORT_PULLUPEN_bm;
 
     // PC2 powers the thermistor (output pin)
-    PORTC_DIRSET = (1 << PC2);
+    PORTC_DIRSET = (1 << TH_PWR_PC2);
 
     // PD0 is radio module reset pin (output pin)
-    PORTD_DIRSET = (1 << PD0);
+    PORTD_DIRSET = (1 << RFM_RST_PD0);
 
     // PD1 is radio module CS pin (output pin + pullup)
-    PORTD_DIRSET = (1 << PD1);
+    PORTD_DIRSET = (1 << RFM_CS_PD1);
     PORTD_PIN1CTRL |= PORT_PULLUPEN_bm;
 
     // PD4 is BME68x CS pin (output pin + pullup)
-    PORTD_DIRSET = (1 << PD4);
+    PORTD_DIRSET = (1 << BME_CS_PD4);
     PORTD_PIN2CTRL |= PORT_PULLUPEN_bm;
 }
 
@@ -254,9 +254,9 @@ static uint16_t convert(ADC_REFSEL_t ref, ADC_MUXPOS_t pin, uint8_t dur) {
  * @return temperature in °C * 10
  */
 static int16_t measureTemp(void) {
-    PORTC_OUTSET = (1 << PC2);
+    PORTC_OUTSET = (1 << TH_PWR_PC2);
     uint32_t adc = convert(ADC_REFSEL_VDD_gc, ADC_MUXPOS_AIN23_gc, 16);
-    PORTC_OUTCLR = (1 << PC2);
+    PORTC_OUTCLR = (1 << TH_PWR_PC2);
 
     // resistance of the thermistor
     float resTh = (4096.0 / fmax(1, adc) - 1) * TH_SERI;
