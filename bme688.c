@@ -8,6 +8,8 @@
  */
 
 #include "bme688.h"
+// #include "../bsec/inc/bsec_datatypes.h"
+// #include "../bsec/inc/bsec_interface.h"
 
 /**
  * Writes given register - data pairs to respective register(s).
@@ -104,6 +106,8 @@ int8_t initBME68x(struct bme68x_dev *dev,
     if (result != BME68X_OK) {
         return result;
     }
+
+    // bsec_init();
 
     return BME68X_OK;
 }
