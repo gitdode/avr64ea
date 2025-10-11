@@ -36,6 +36,8 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/_ext/ce5ff35b/avr64ea.o \
+	${OBJECTDIR}/_ext/ce5ff35b/bme688.o \
+	${OBJECTDIR}/_ext/27122b70/bme68x.o \
 	${OBJECTDIR}/_ext/ce5ff35b/rfm.o \
 	${OBJECTDIR}/_ext/ce5ff35b/spi.o \
 	${OBJECTDIR}/_ext/ce5ff35b/usart.o
@@ -68,6 +70,14 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/avr64ea: ${OBJECTFILES}
 ${OBJECTDIR}/_ext/ce5ff35b/avr64ea.o: /home/dode/dev/avr64ea/avr64ea.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/ce5ff35b
 	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -DRFM=69 -D__AVR_AVR64EA28__ -D__flash=volatile -I. -I/home/dode/dev -std=c99 -o ${OBJECTDIR}/_ext/ce5ff35b/avr64ea.o /home/dode/dev/avr64ea/avr64ea.c
+
+${OBJECTDIR}/_ext/ce5ff35b/bme688.o: /home/dode/dev/avr64ea/bme688.c
+	${MKDIR} -p ${OBJECTDIR}/_ext/ce5ff35b
+	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -DRFM=69 -D__AVR_AVR64EA28__ -D__flash=volatile -I. -I/home/dode/dev -o ${OBJECTDIR}/_ext/ce5ff35b/bme688.o /home/dode/dev/avr64ea/bme688.c
+
+${OBJECTDIR}/_ext/27122b70/bme68x.o: /home/dode/dev/avr64ea/bme68x/bme68x.c
+	${MKDIR} -p ${OBJECTDIR}/_ext/27122b70
+	$(COMPILE.c) -g -DBAUD=9600 -DBAUDRATE=9600 -DF_CPU=10000000UL -DRFM=69 -D__AVR_AVR64EA28__ -D__flash=volatile -I. -I/home/dode/dev -o ${OBJECTDIR}/_ext/27122b70/bme68x.o /home/dode/dev/avr64ea/bme68x/bme68x.c
 
 ${OBJECTDIR}/_ext/ce5ff35b/rfm.o: /home/dode/dev/avr64ea/rfm.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/ce5ff35b

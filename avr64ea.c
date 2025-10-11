@@ -29,6 +29,7 @@
 #if RFM == 95
     #include "librfm95/librfm95.h"
 #endif
+#include "bme688.h"
 
 /* Timebase used for timing internal delays */
 #define TIMEBASE_VALUE ((uint8_t) ceil(F_CPU * 0.000001))
@@ -91,7 +92,7 @@ ISR(ADC0_RESRDY_vect) {
 EMPTY_INTERRUPT(ADC0_RESRDY_vect);
 
 /**
- * Radio module DIO and DIO4 (FSK)/DIO1 (LoRa) interrupt.
+ * Radio module DIO0 and DIO4 (FSK)/DIO1 (LoRa) interrupt.
  */
 ISR(PORTD_PORT_vect) {
     if (PORTD_INTFLAGS & PORT_INT_2_bm) {
@@ -134,6 +135,10 @@ static void initPins(void) {
     // PD1 is radio module CS pin (output pin + pullup)
     PORTD_DIRSET = (1 << PD1);
     PORTD_PIN1CTRL |= PORT_PULLUPEN_bm;
+
+    // PD4 is BME68x CS pin (output pin + pullup)
+    PORTD_DIRSET = (1 << PD4);
+    PORTD_PIN2CTRL |= PORT_PULLUPEN_bm;
 }
 
 /* Sets CPU and peripherals clock speed */
@@ -312,6 +317,15 @@ int main(void) {
         printString("Radio init failed!\r\n");
     }
 
+    struct bme68x_dev dev;
+    struct bme68x_conf conf;
+    struct bme68x_heatr_conf heater_conf;
+    int8_t bme688 = initBME68x(&dev, &conf, &heater_conf);
+    if (bme688 != 0 && USART) {
+        printString("BME688 init failed!\r\n");
+        printInt(bme688);
+    }
+
     // enable global interrupts
     sei();
 
@@ -349,6 +363,8 @@ int main(void) {
                     printString(buf);
                     snprintf(buf, sizeof (buf), "%d mV\r\n", bavg);
                     printString(buf);
+
+                    bme68xMeasure(&dev, &conf, &heater_conf);
                 }
             }
 
