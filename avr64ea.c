@@ -364,7 +364,9 @@ int main(void) {
                     snprintf(buf, sizeof (buf), "%d mV\r\n", bavg);
                     printString(buf);
 
-                    bme68xMeasure(&dev, &conf, &heater_conf);
+                    if (bme688 == 0) {
+                        bme68xMeasure(&dev, &conf, &heater_conf);
+                    }
                 }
             }
 
