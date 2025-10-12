@@ -19,12 +19,18 @@
 #include "usart.h"
 #include "bme68x/bme68x.h"
 
+/* Port and pin for SPI chip select */
+typedef struct {
+    volatile uint8_t *port;
+    uint8_t pin;
+} Intf;
+
 /**
  * Initializes the BME68x sensor.
  * 
- * @param dev
- * @param conf
- * @param heater_conf
+ * @param dev device
+ * @param conf sensor config
+ * @param heater_conf heater config
  * @return error code
  */
 int8_t initBME68x(struct bme68x_dev *dev,
@@ -34,9 +40,9 @@ int8_t initBME68x(struct bme68x_dev *dev,
 /**
  * Performs a measurement.
  * 
- * @param dev
- * @param conf
- * @param heater_conf
+ * @param dev device
+ * @param conf sensor config
+ * @param heater_conf heater config
  * @return error code
  */
 int8_t bme68xMeasure(struct bme68x_dev *dev,
