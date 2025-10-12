@@ -75,6 +75,7 @@ static void bme68xDelayUs(uint32_t period, void *intfPtr) {
 int8_t initBME68x(struct bme68x_dev *dev,
                   struct bme68x_conf *conf,
                   struct bme68x_heatr_conf *heater_conf) {
+    _delay_ms(2);
 
     static Intf intf = {.port = &PORTD_OUT, .pin = BME_CS_PD4};
     int8_t result;
