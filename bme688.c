@@ -8,8 +8,8 @@
  */
 
 #include "bme688.h"
-// #include "../bsec/inc/bsec_datatypes.h"
-// #include "../bsec/inc/bsec_interface.h"
+#include "../bsec/inc/bsec_datatypes.h"
+#include "../bsec/inc/bsec_interface.h"
 
 /**
  * Writes given register - data pairs to respective register(s).
@@ -18,14 +18,14 @@
  * @param data array with data of first register - data pair as first element,
  *   with remaining register - data pairs following
  * @param len (number of register - data pairs) - 1
- * @param intfPtr
+ * @param intfPtr port and pin for SPI chip select
  * @return success
  */
 static BME68X_INTF_RET_TYPE bme68xWrite(uint8_t reg,
                                         const uint8_t *data,
                                         uint32_t len,
                                         void *intfPtr) {
-    Intf intf = *((Intf *)intfPtr);
+    const Intf intf = *((Intf *)intfPtr);
     *intf.port &= ~(1u << intf.pin);
     transmit(reg);
     for (uint32_t i = 0; i < len; i++) {
@@ -50,7 +50,7 @@ static BME68X_INTF_RET_TYPE bme68xRead(uint8_t reg,
                                        uint8_t *data,
                                        uint32_t len,
                                        void *intfPtr) {
-    Intf intf = *((Intf *)intfPtr);
+    const Intf intf = *((Intf *)intfPtr);
     *intf.port &= ~(1u << intf.pin);
     transmit(reg);
     for (uint32_t i = 0; i < len; i++) {
@@ -139,16 +139,24 @@ int8_t bme68xMeasure(struct bme68x_dev *dev,
         }
 
         count++;
-    } while ((n_data != 1 || data.status != 176) && count < 10);
+    } while ((n_data != 1 || data.status != 0xb0) && count < 10);
 
     div_t tdiv = div(data.temperature, 100);
 
-    char buf[70];
-    snprintf(buf, sizeof (buf), "%c%d.%d°, %ld hPa, %ld%%, %ld Ohm, %d\r\n",
+    // highly sophisticated AQI algorithm
+    char *aqi = "excellent";
+    if (data.gas_resistance < 50000L) aqi = "good";
+    if (data.gas_resistance < 40000L) aqi = "moderate";
+    if (data.gas_resistance < 30000L) aqi = "poor";
+    if (data.gas_resistance < 20000L) aqi = "unhealthy";
+
+    char buf[80];
+    snprintf(buf, sizeof (buf), "%c%d.%d°, %ld%%, %ld hPa, %ld Ohm (%s), 0x%02x\r\n",
             data.temperature < 0 ? '-' : ' ', abs(tdiv.quot), abs(tdiv.rem),
-            data.pressure / 100,
             data.humidity / 1000,
+            data.pressure / 100,
             data.gas_resistance,
+            aqi,
             data.status);
     printString(buf);
 
