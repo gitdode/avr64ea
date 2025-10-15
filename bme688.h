@@ -43,13 +43,14 @@ int8_t initBME68x(struct bme68x_dev *dev,
  * @param dev device
  * @param conf sensor config
  * @param heater_conf heater config
+ * @param data measurement data read from sensor
  * @return error code
  */
 int8_t bme68xMeasure(struct bme68x_dev *dev,
                      struct bme68x_conf *conf,
-                     struct bme68x_heatr_conf *heater_conf);
+                     struct bme68x_heatr_conf *heater_conf,
+                     struct bme68x_data *data);
 
 #undef __DELAY_BACKWARD_COMPATIBLE__
 
 #endif /* BME688_H */
-

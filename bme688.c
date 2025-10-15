@@ -117,9 +117,9 @@ int8_t initBME68x(struct bme68x_dev *dev,
 
 int8_t bme68xMeasure(struct bme68x_dev *dev,
                      struct bme68x_conf *conf,
-                     struct bme68x_heatr_conf *heater_conf) {
+                     struct bme68x_heatr_conf *heater_conf,
+                     struct bme68x_data *data) {
 
-    struct bme68x_data data;
     int8_t result;
     uint8_t n_data = 0;
     uint8_t count = 0;
@@ -133,32 +133,13 @@ int8_t bme68xMeasure(struct bme68x_dev *dev,
                 heater_conf->heatr_dur * 1000L;
         dev->delay_us(meas_dur, dev->intf_ptr);
 
-        result = bme68x_get_data(BME68X_FORCED_MODE, &data, &n_data, dev);
+        result = bme68x_get_data(BME68X_FORCED_MODE, data, &n_data, dev);
         if (result < BME68X_OK) {
             return result;
         }
 
         count++;
-    } while ((n_data != 1 || data.status != 0xb0) && count < 10);
-
-    div_t tdiv = div(data.temperature, 100);
-
-    // highly sophisticated AQI algorithm
-    char *aqi = "excellent";
-    if (data.gas_resistance < 50000L) aqi = "good";
-    if (data.gas_resistance < 40000L) aqi = "moderate";
-    if (data.gas_resistance < 30000L) aqi = "poor";
-    if (data.gas_resistance < 20000L) aqi = "unhealthy";
-
-    char buf[80];
-    snprintf(buf, sizeof (buf), "%c%d.%d°, %ld%%, %ld hPa, %ld Ohm (%s), 0x%02x\r\n",
-            data.temperature < 0 ? '-' : ' ', abs(tdiv.quot), abs(tdiv.rem),
-            data.humidity / 1000,
-            data.pressure / 100,
-            data.gas_resistance,
-            aqi,
-            data.status);
-    printString(buf);
+    } while ((n_data != 1 || data->status != 0xb0) && count < 10);
 
     return BME68X_OK;
 }

@@ -345,33 +345,75 @@ int main(void) {
                 uint16_t temp = measureTemp();
                 uint8_t power = rfmGetOutputPower();
 
-                if (radio) {
-                    uint8_t payload[] = {
-                        temp >> 8, temp & 0x00ff,
-                        power,
-                        bavg >> 8, bavg & 0x00ff
-                    };
-                    rfmWake();
-                    rfmTransmitPayload(payload, sizeof (payload), 0x24);
-                    rfmSleep();
-                }
-
                 if (USART) {
+                    // print temperature measured with thermistor for reference
                     div_t tmp = div(temp, 10);
                     char buf[18];
                     snprintf(buf, sizeof (buf), "%4d.%d°C\r\n", tmp.quot, abs(tmp.rem));
                     printString(buf);
+                    // print battery voltage
                     snprintf(buf, sizeof (buf), "%d mV\r\n", bavg);
                     printString(buf);
+                }
 
-                    if (bme688 == 0) {
-                        bme68xMeasure(&dev, &conf, &heater_conf);
+                if (bme688 == 0) {
+                    struct bme68x_data data;
+                    bme68xMeasure(&dev, &conf, &heater_conf, &data);
+
+                    div_t tdiv = div(data.temperature, 100);
+                    uint8_t humidity = data.humidity / 1000;
+                    uint16_t pressure = data.pressure / 100;
+
+                    if (radio) {
+                        uint8_t payload[] = {
+                            data.temperature >> 8 & 0x00ff,
+                            data.temperature & 0x00ff,
+                            humidity,
+                            pressure >> 8 & 0x00ff,
+                            pressure & 0x00ff,
+                            // transmit only 24 bit (to avoid additional 0's
+                            // caused by DC offset because of so many 0's?)
+                            // data.gas_resistance >> 24 & 0x00ff,
+                            data.gas_resistance >> 16 & 0x00ff,
+                            data.gas_resistance >> 8  & 0x00ff,
+                            data.gas_resistance & 0x00ff,
+                            // temp >> 8 & 0x00ff, temp & 0x00ff,
+                            power,
+                            bavg >> 8 & 0x00ff,
+                            bavg & 0x00ff
+                        };
+                        rfmWake();
+                        rfmTransmitPayload(payload, sizeof (payload), 0x24);
+                        rfmSleep();
+                    }
+
+                    if (USART) {
+                        // highly sophisticated IAQ algorithm
+                        char *aqi = "excellent";
+                        if (data.gas_resistance < 50000L) aqi = "good";
+                        if (data.gas_resistance < 40000L) aqi = "moderate";
+                        if (data.gas_resistance < 30000L) aqi = "poor";
+                        if (data.gas_resistance < 20000L) aqi = "unhealthy";
+
+                        // print measurements of the BME688
+                        char buf[80];
+                        snprintf(buf, sizeof (buf), "%c%d.%d°C, %d%%, %d hPa, %ld Ohm (%s), 0x%02x\r\n",
+                                data.temperature < 0 ? '-' : ' ', abs(tdiv.quot), abs(tdiv.rem),
+                                humidity,
+                                pressure,
+                                data.gas_resistance,
+                                aqi,
+                                data.status);
+                        printString(buf);
                     }
                 }
             }
 
+            // generate an event on channel 0 incrementing timer 0B count
             generate_event(0);
             if (USART) printInt(TCB0_CNT); // 16-Bit
+
+            // wait for USART tx to be done (before going to sleep)
             wait_usart_tx_done();
         }
 
