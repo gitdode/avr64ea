@@ -64,7 +64,7 @@ void printString(const char *data) {
 }
 
 void printInt(int16_t data) {
-    char buf[7];
+    char buf[9];
     snprintf(buf, sizeof (buf), "%d\r\n", data);
     printString(buf);
 }

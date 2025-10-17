@@ -366,21 +366,21 @@ int main(void) {
 
                     if (radio) {
                         uint8_t payload[] = {
-                            data.temperature >> 8 & 0x00ff,
-                            data.temperature & 0x00ff,
+                            data.temperature >> 8,
+                            data.temperature,
                             humidity,
-                            pressure >> 8 & 0x00ff,
-                            pressure & 0x00ff,
-                            // transmit only 24 bit (to avoid additional 0's
-                            // caused by DC offset because of so many 0's?)
-                            // data.gas_resistance >> 24 & 0x00ff,
-                            data.gas_resistance >> 16 & 0x00ff,
-                            data.gas_resistance >> 8  & 0x00ff,
-                            data.gas_resistance & 0x00ff,
-                            // temp >> 8 & 0x00ff, temp & 0x00ff,
+                            pressure >> 8,
+                            pressure,
+                            // 18 bit are probably more than sufficient plus
+                            // a simple "DC free" mechanism avoiding some
+                            // consecutive 0's
+                            // data.gas_resistance >> 24,
+                            (data.gas_resistance >> 16) | 0xa8,
+                            data.gas_resistance >> 8,
+                            data.gas_resistance,
                             power,
-                            bavg >> 8 & 0x00ff,
-                            bavg & 0x00ff
+                            bavg >> 8,
+                            bavg
                         };
                         rfmWake();
                         rfmTransmitPayload(payload, sizeof (payload), 0x24);
@@ -409,7 +409,7 @@ int main(void) {
                 }
             }
 
-            // generate an event on channel 0 incrementing timer 0B count
+            // generate an event on channel 0 incrementing timer B0 count
             generate_event(0);
             if (USART) printInt(TCB0_CNT); // 16-Bit
 
