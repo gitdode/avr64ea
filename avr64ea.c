@@ -361,8 +361,8 @@ int main(void) {
                     bme68xMeasure(&dev, &conf, &heater_conf, &data);
 
                     div_t tdiv = div(data.temperature, 100);
-                    uint8_t humidity = data.humidity / 1000;
-                    uint16_t pressure = data.pressure / 100;
+                    uint8_t humidity = divRoundNearest(data.humidity, 1000);
+                    uint16_t pressure = divRoundNearest(data.pressure, 100);
 
                     if (radio) {
                         uint8_t payload[] = {
