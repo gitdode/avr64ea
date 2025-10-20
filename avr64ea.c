@@ -363,6 +363,7 @@ int main(void) {
                     div_t tdiv = div(data.temperature, 100);
                     uint8_t humidity = divRoundNearest(data.humidity, 1000);
                     uint16_t pressure = divRoundNearest(data.pressure, 100);
+                    uint32_t gas_res = data.gas_resistance / 100; // hOhm
 
                     if (radio) {
                         uint8_t payload[] = {
@@ -375,9 +376,9 @@ int main(void) {
                             // a simple "DC free" mechanism avoiding some
                             // consecutive 0's
                             // data.gas_resistance >> 24,
-                            (data.gas_resistance >> 16) | 0xa8,
-                            data.gas_resistance >> 8,
-                            data.gas_resistance,
+                            (gas_res >> 16) | 0xa8,
+                            gas_res >> 8,
+                            gas_res,
                             power,
                             bavg >> 8,
                             bavg
