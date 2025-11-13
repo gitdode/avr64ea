@@ -355,10 +355,10 @@ int main(void) {
             generate_event(0);
             if (USART) printInt(TCB0_CNT); // 16-Bit
             wait_usart_tx_done();
+        
+            // save some power
+            sleep_mode();
         }
-
-        // save some power
-        sleep_mode();
     }
 
     return 0;
